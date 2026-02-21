@@ -3,10 +3,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException, NoSuchElementException
+from dotenv import load_dotenv
+import os
 from time import sleep
 
-INSTAGRAM_ID = "malvankarshivam70@gmail.com"
-INSTAGRAM_PASS = "shivam_1234"
+# Load environment variables
+load_dotenv()
+
+INSTAGRAM_ID = os.getenv("INSTAGRAM_ID")
+INSTAGRAM_PASS = os.getenv("INSTAGRAM_PASS")
+
 INSTAGRAM_URL = "https://www.instagram.com/accounts/login/"
 SIMILAR_ACCOUNT = "buzzfeedtasty"
 
@@ -17,42 +23,48 @@ driver = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(driver, 30)
 driver.get(url=INSTAGRAM_URL)
 
-
+# Username field
 username = wait.until(
-    EC.element_to_be_clickable((By.XPATH, '//*[@id="_R_32d9lplcldcpbn6b5ipamH1_"]'))
+    EC.element_to_be_clickable((By.NAME, "username"))
 )
+
+# Password field
 password = wait.until(
-    EC.element_to_be_clickable((By.XPATH, '//*[@id="_R_33d9lplcldcpbn6b5ipamH1_"]'))
+    EC.element_to_be_clickable((By.NAME, "password"))
 )
+
+# Login button
 login = wait.until(
-    EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/div[1]/div/div[3]/div/div/div'))
+    EC.element_to_be_clickable((By.XPATH, "//button[@type='submit']"))
 )
-username.click()
+
 username.send_keys(INSTAGRAM_ID)
-password.click()
 password.send_keys(INSTAGRAM_PASS)
 login.click()
 
-sleep(4.3)
+sleep(5)
+
+# Handle popups safely
 try:
-    save_login_prompt = driver.find_element(by=By.XPATH, value="//div[contains(text(), 'Not now')]")
-    if save_login_prompt:
-        save_login_prompt.click()
+    not_now = wait.until(
+        EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Not Now')]"))
+    )
+    not_now.click()
+except:
+    pass
 
-except NoSuchElementException:
+sleep(3)
 
-    continue_prompt = driver.find_element(by=By.XPATH, value='//*[@id="mount_0_0_k4"]/div/div/div[2]/div/div/div[1]/div[1]/div/div/div/div[3]/div/div/div/div/div/div/div/div/div/div/div/div[3]/div/div[1]/div')
-    if continue_prompt:
-        continue_prompt.click()
+# Go to followers page
+driver.get(f"https://www.instagram.com/{SIMILAR_ACCOUNT}/followers")
 
 sleep(5)
 
-driver.get(f"https://www.instagram.com/{SIMILAR_ACCOUNT}/followers")
+# Scroll followers modal
+modal = wait.until(
+    EC.presence_of_element_located((By.XPATH, "//div[@role='dialog']//ul/.."))
+)
 
-sleep(8.2)
-
-modal_xpath = "/html/body/div[6]/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]"
-modal = driver.find_element(by=By.XPATH, value=modal_xpath)
-for i in range(5):
+for _ in range(5):
     driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
     sleep(2)
